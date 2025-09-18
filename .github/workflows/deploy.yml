@@ -18,7 +18,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v1
       with:
-        path: '.'  # Carpeta raíz del repo, cambia a './docs' si usas docs/
+        path: './docs'
 
     - name: Deploy to GitHub Pages
       uses: actions/deploy-pages@v1
