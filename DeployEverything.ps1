@@ -1,7 +1,7 @@
 # Configuración
 $localPath = "C:\Users\Renato\Desktop\stable-diffusion-webui-github"  # Carpeta de tu proyecto
 $repoURL = "https://github.com/benro2800-cmd/stable-diffusion-webui.git" # Tu repo en GitHub
-$branchName = "main"  # Cambia a master si tu GitHub usa master
+$branchName = "main"  # Cambia a master si tu repo usa master
 
 # Ir a la carpeta del proyecto
 Set-Location $localPath
@@ -24,11 +24,43 @@ if ($submodules) {
     }
 }
 
-# Añadir todos los demás archivos
+# Crear carpeta docs/ si no existe
+$docsPath = "$localPath\docs"
+if (!(Test-Path $docsPath)) {
+    New-Item -ItemType Directory -Path $docsPath
+}
+
+# Crear index.html en docs/
+$indexFile = "$docsPath\index.html"
+$indexContent = @"
+<!DOCTYPE html>
+<html lang='es'>
+<head>
+  <meta charset='UTF-8'>
+  <title>Stable Diffusion WebUI</title>
+  <style>
+    body { font-family: Arial; text-align: center; padding: 50px; background: #f0f0f0; }
+    h1 { color: #333; }
+    a { color: #0066cc; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>Stable Diffusion WebUI</h1>
+  <p>Proyecto subido a GitHub Pages con deploy automático.</p>
+  <p>
+    <a href='$repoURL' target='_blank'>Ver repositorio en GitHub</a>
+  </p>
+</body>
+</html>
+"@
+Set-Content -Path $indexFile -Value $indexContent
+
+# Añadir todos los archivos
 git add .
 
 # Hacer commit
-git commit -m "Subida automática desde PowerShell"
+git commit -m "Subida automática con workflow y docs"
 
 # Subir a GitHub
 git push -u origin $branchName
@@ -40,7 +72,6 @@ if (!(Test-Path $workflowPath)) {
 }
 
 $workflowFile = "$workflowPath\deploy.yml"
-
 $workflowContent = @"
 name: GitHub Pages Deploy
 
@@ -62,16 +93,14 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v1
       with:
-        path: '.'  # Carpeta raíz del repo, cambia a './docs' si usas docs/
+        path: './docs'
 
     - name: Deploy to GitHub Pages
       uses: actions/deploy-pages@v1
 "@
-
-# Guardar workflow
 Set-Content -Path $workflowFile -Value $workflowContent
 
-# Añadir y subir workflow a GitHub
+# Añadir y subir workflow
 git add $workflowFile
 git commit -m "Agregar workflow de GitHub Actions para Pages"
 git push
