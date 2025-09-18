@@ -1,12 +1,12 @@
-# ConfiguraciÃ³n
-$localPath = "C:\Users\Renato\Desktop\stable-diffusion-webui-github"  # Carpeta de tu proyecto
-$repoURL = "https://github.com/benro2800-cmd/stable-diffusion-webui.git" # Tu repo en GitHub
-$branchName = "main"  # Cambia a master si tu repo usa master
+# Configuración
+$localPath = "C:\Users\Renato\Desktop\stable-diffusion-webui-github"
+$repoURL = "https://github.com/benro2800-cmd/stable-diffusion-webui.git"
+$branchName = "main"
 
 # Ir a la carpeta del proyecto
 Set-Location $localPath
 
-# Inicializar Git si no estÃ¡
+# Inicializar Git si no está
 if (!(Test-Path ".git")) {
     git init
     git remote add origin $repoURL
@@ -15,14 +15,10 @@ if (!(Test-Path ".git")) {
 # Cambiar nombre del branch si es necesario
 git branch -M $branchName
 
-# Quitar submÃ³dulos del Ã­ndice (no se subirÃ¡n)
-$submodules = git submodule status --quiet 2>$null
-if ($submodules) {
-    $submodulesList = git submodule foreach --quiet 'echo $sm_path' 2>$null
-    foreach ($sm in $submodulesList) {
-        git rm --cached $sm
-    }
-}
+# Limpiar todos los submódulos
+Write-Output "Limpiando submódulos..."
+git submodule foreach --recursive git reset --hard
+git submodule foreach --recursive git clean -fdx
 
 # Crear carpeta docs/ si no existe
 $docsPath = "$localPath\docs"
@@ -47,7 +43,7 @@ $indexContent = @"
 </head>
 <body>
   <h1>Stable Diffusion WebUI</h1>
-  <p>Proyecto subido a GitHub Pages con deploy automÃ¡tico.</p>
+  <p>Proyecto subido a GitHub Pages con deploy automático.</p>
   <p>
     <a href='$repoURL' target='_blank'>Ver repositorio en GitHub</a>
   </p>
@@ -55,15 +51,6 @@ $indexContent = @"
 </html>
 "@
 Set-Content -Path $indexFile -Value $indexContent
-
-# AÃ±adir todos los archivos
-git add .
-
-# Hacer commit
-git commit -m "Subida automÃ¡tica con workflow y docs"
-
-# Subir a GitHub
-git push -u origin $branchName
 
 # Crear workflow de GitHub Actions para GitHub Pages
 $workflowPath = "$localPath\.github\workflows"
@@ -100,7 +87,11 @@ jobs:
 "@
 Set-Content -Path $workflowFile -Value $workflowContent
 
-# AÃ±adir y subir workflow
-git add $workflowFile
-git commit -m "Agregar workflow de GitHub Actions para Pages"
-git push
+# Añadir todos los cambios (ignora submódulos)
+git add . --ignore-errors
+
+# Commit de cambios
+git commit -m "Limpiar submódulos y subir docs con workflow de Pages"
+
+# Push al repo remoto
+git push -u origin $branchName
